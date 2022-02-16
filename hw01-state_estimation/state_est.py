@@ -2,11 +2,14 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-14t22:49R
+ When      : 2022-02-14t23:02R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.0.0
+ Version   : 1.0.1
 
  CHANGELOG :
+    v1.0.1 - 2022-02-14t23:02R <https://github.com/lduran2>
+        `get_net` accepts types of networks `net_type`
+
     v1.0.0 - 2022-02-14t22:49R <https://github.com/lduran2>
         moved simultion to main method
 
@@ -53,8 +56,9 @@ def main():
 
 #################################################################################################################################
 
-def get_net():
-    return case9()
+def get_net(net_type=case9):
+    print(fr"===running {net_type} net===")
+    return net_type()
 
 def print_net_est_res(net):
 
