@@ -2,11 +2,14 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-14t23:02R
+ When      : 2022-02-14t23:06R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.0.1
+ Version   : 1.0.2
 
  CHANGELOG :
+    v1.0.2 - 2022-02-14t23:02R <https://github.com/lduran2>
+        default `net_type` added to `main`
+
     v1.0.1 - 2022-02-14t23:02R <https://github.com/lduran2>
         `get_net` accepts types of networks `net_type`
 
@@ -27,8 +30,11 @@ from pandapower.networks import *
 from math import fabs
 import pandapower as pp
 
-def main():
-    net = get_net()
+# default type of net to open in get_net
+DEFAULT_NET_TYPE = case9
+
+def main(net_type=DEFAULT_NET_TYPE):
+    net = get_net(net_type=net_type)
     pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
 
     net2 = get_net()
@@ -56,9 +62,12 @@ def main():
 
 #################################################################################################################################
 
-def get_net(net_type=case9):
+def get_net(net_type=DEFAULT_NET_TYPE):
+    # print the net_type that is going to run
     print(fr"===running {net_type} net===")
+    # create and return it
     return net_type()
+# end def get_net(net_type=DEFAULT_NET_TYPE)
 
 def print_net_est_res(net):
 
