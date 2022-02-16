@@ -1,12 +1,15 @@
 r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
- By        : Krishna Kant <https://www.kkant.net/>
- When      : 2022-01-26
+ By        : Leomar Durán <https://github.com/lduran2>
+ When      : 2022-02-14t22:49R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 0.0.0
+ Version   : 1.0.0
 
  CHANGELOG :
+    v1.0.0 - 2022-02-14t22:49R <https://github.com/lduran2>
+        moved simultion to main method
+
     v0.0.0 - 2022-01-26 <https://www.kkant.net/>
         initial version
  '''
@@ -20,6 +23,35 @@ from pandapower.diagnostic import diagnostic
 from pandapower.networks import *
 from math import fabs
 import pandapower as pp
+
+def main():
+    net = get_net()
+    pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
+
+    net2 = get_net()
+
+    v_stddev = 0.025 # pu
+    pq_stddev = 0.025 # MW/Mvar
+    i_stddev= 0.002 # kA
+
+    pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev)
+    #diagnostic(net2, report_style='detailed')
+    chi2_test = chi2_analysis(net2)
+    if chi2_test: 
+        print("Bad data found")
+        success = remove_bad_data(net2)
+    else:     
+        success = False
+    #success = estimate(net2, calculate_voltage_angles=True, zero_injection='auto', init='flat')
+    if success:
+        V, delta = net2.res_bus_est.vm_pu, net2.res_bus_est.va_degree
+        print("Voltages: ")
+        print(V, sep=' ')
+        print("\n Voltage angles: ", delta, sep=' ')
+        print_est_comparison(net, net2, 1, 0.001)
+# end def main()
+
+#################################################################################################################################
 
 def get_net():
     return case9()
@@ -178,28 +210,5 @@ def pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev):
 
 #################################################################################################################################
 
-net = get_net()
-pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
-
-net2 = get_net()
-
-v_stddev = 0.025 # pu
-pq_stddev = 0.025 # MW/Mvar
-i_stddev= 0.002 # kA
-
-pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev)
-#diagnostic(net2, report_style='detailed')
-chi2_test = chi2_analysis(net2)
-if chi2_test: 
-    print("Bad data found")
-    success = remove_bad_data(net2)
-else:     
-    success = False
-#success = estimate(net2, calculate_voltage_angles=True, zero_injection='auto', init='flat')
-if success:
-    V, delta = net2.res_bus_est.vm_pu, net2.res_bus_est.va_degree
-    print("Voltages: ")
-    print(V, sep=' ')
-    print("\n Voltage angles: ", delta, sep=' ')
-    print_est_comparison(net, net2, 1, 0.001)
-
+if (__name__==r'__main__'):
+    main()
