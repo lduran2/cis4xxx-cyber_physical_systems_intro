@@ -2,11 +2,14 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-16t10:22R
+ When      : 2022-02-16t10:40R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.1.1
+ Version   : 1.1.2
 
  CHANGELOG :
+    v1.1.2 - 2022-02-16t10:40R <https://github.com/lduran2>
+        printing dimensions of each individual component
+
     v1.1.1 - 2022-02-16t10:22R <https://github.com/lduran2>
         printing each individual component
 
@@ -118,20 +121,42 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
             else:
                 return '+'
 
-    comp_types_to_diff = {
-        'bus': None,
-        'line': None,
-        'trafo': None,
-        'trafo3w': None
+    # map of component types to dimensions that should be diffed
+    comp_types_to_dims = {
+        r'bus': [
+            r'vm_pu', r'p_mw', r'q_mvar'
+        ],
+        'line': [
+            r'p_from_mw', r'p_to_mw',
+            r'q_from_mvar', r'q_to_mvar',
+            r'i_from_ka', r'i_to_ka'
+        ],
+        r'trafo': [
+            r'p_hv_mw', r'p_lv_mw',
+            r'q_hv_mvar', r'q_lv_mvar',
+            r'i_hv_ka', r'i_lv_ka'
+        ],
+        r'trafo3w': [
+            r'p_hv_mw', r'p_lv_mw', r'p_mv_mw',
+            r'q_hv_mvar', r'q_lv_mvar', r'q_mv_mvar',
+            r'i_hv_ka', r'i_lv_ka', r'i_mv_ka'
+        ]
     }
 
     # for each component type
-    for comp_types, measures in comp_types_to_diff.items():
+    for comp_type, dims in comp_types_to_dims.items():
         # loop through each component of that type
-        for index in getattr(net, comp_types).index:
-            print(getattr(net2, fr"res_{comp_types}_est"))
+        for index in getattr(net, comp_type).index:
+            # get the estimates
+            est = getattr(net2, fr"res_{comp_type}_est")
+            # get the reference value
+            ref = getattr(net2, fr"res_{comp_type}")
+            # for each dimension
+            for dim in dims:
+                print(fr"{est}.{dim}:", getattr(est, dim))
+            # next dim
         # next index
-    # next comp_types, measures
+    # next comp_type, dims
 
     # bus`s
     for busIndex in net.bus.index:
