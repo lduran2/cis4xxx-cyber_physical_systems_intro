@@ -2,11 +2,15 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-16t10:40R
+ When      : 2022-02-16t10:48R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.1.2
+ Version   : 1.1.3
 
  CHANGELOG :
+    v1.1.3 - 2022-02-16t10:55R <https://github.com/lduran2>
+        successfully applying `diff_stat` on each dimension/index
+        differentiate between net and net2
+
     v1.1.2 - 2022-02-16t10:40R <https://github.com/lduran2>
         printing dimensions of each individual component
 
@@ -123,19 +127,23 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
 
     # map of component types to dimensions that should be diffed
     comp_types_to_dims = {
+        # busses
         r'bus': [
             r'vm_pu', r'p_mw', r'q_mvar'
         ],
+        # lines
         'line': [
             r'p_from_mw', r'p_to_mw',
             r'q_from_mvar', r'q_to_mvar',
             r'i_from_ka', r'i_to_ka'
         ],
+        # transformers
         r'trafo': [
             r'p_hv_mw', r'p_lv_mw',
             r'q_hv_mvar', r'q_lv_mvar',
             r'i_hv_ka', r'i_lv_ka'
         ],
+        # 3-Watt transformers
         r'trafo3w': [
             r'p_hv_mw', r'p_lv_mw', r'p_mv_mw',
             r'q_hv_mvar', r'q_lv_mvar', r'q_mv_mvar',
@@ -145,60 +153,22 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
 
     # for each component type
     for comp_type, dims in comp_types_to_dims.items():
-        # loop through each component of that type
+        # loop through each component of that type on NET
         for index in getattr(net, comp_type).index:
-            # get the estimates
-            est = getattr(net2, fr"res_{comp_type}_est")
-            # get the reference value
-            ref = getattr(net2, fr"res_{comp_type}")
+            # get the estimates on NET2
+            est2 = getattr(net2, fr"res_{comp_type}_est")
+            # get the reference value on NET
+            ref = getattr(net, fr"res_{comp_type}")
             # for each dimension
             for dim in dims:
-                print(fr"{est}.{dim}:", getattr(est, dim))
+                # dimension on estimate
+                est2_dim = getattr(est2, dim)
+                # current dimension on reference
+                curr_ref_dim = getattr(ref, dim)[index]
+                est2_dim[index] = diff_stat(curr_ref_dim, est2_dim[index], alarm_thr, noise_lim)
             # next dim
         # next index
     # next comp_type, dims
-
-    # bus`s
-    for busIndex in net.bus.index:
-        net2.res_bus_est.vm_pu[busIndex] = diff_stat(net.res_bus.vm_pu[busIndex], net2.res_bus_est.vm_pu[busIndex], alarm_thr, noise_lim)
-        net2.res_bus_est.p_mw[busIndex] = diff_stat(net.res_bus.p_mw[busIndex], net2.res_bus_est.p_mw[busIndex], alarm_thr, noise_lim)
-        net2.res_bus_est.q_mvar[busIndex] = diff_stat(net.res_bus.q_mvar[busIndex], net2.res_bus_est.q_mvar[busIndex], alarm_thr, noise_lim)
-
-    # line`s
-    for lineIndex in net.line.index:
-        net2.res_line_est.p_from_mw[lineIndex] = diff_stat(net.res_line.p_from_mw[lineIndex], net2.res_line_est.p_from_mw[lineIndex], alarm_thr, noise_lim)
-        net2.res_line_est.p_to_mw[lineIndex] = diff_stat(net.res_line.p_to_mw[lineIndex], net2.res_line_est.p_to_mw[lineIndex], alarm_thr, noise_lim)
-
-        net2.res_line_est.q_from_mvar[lineIndex] = diff_stat(net.res_line.q_from_mvar[lineIndex], net2.res_line_est.q_from_mvar[lineIndex], alarm_thr, noise_lim)
-        net2.res_line_est.q_to_mvar[lineIndex] = diff_stat(net.res_line.q_to_mvar[lineIndex], net2.res_line_est.q_to_mvar[lineIndex], alarm_thr, noise_lim)
-
-        net2.res_line_est.i_from_ka[lineIndex] = diff_stat(net.res_line.i_from_ka[lineIndex], net2.res_line_est.i_from_ka[lineIndex], alarm_thr, noise_lim)
-        net2.res_line_est.i_to_ka[lineIndex] = diff_stat(net.res_line.i_to_ka[lineIndex], net2.res_line_est.i_to_ka[lineIndex], alarm_thr, noise_lim)
-
-    # trafo`s
-    for trafoIndex in net.trafo.index:
-        net2.res_trafo_est.p_hv_mw[trafoIndex] = diff_stat(net.res_trafo.p_hv_mw[trafoIndex], net2.res_trafo_est.p_hv_mw[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo_est.p_lv_mw[trafoIndex] = diff_stat(net.res_trafo.p_lv_mw[trafoIndex], net2.res_trafo_est.p_lv_mw[trafoIndex], alarm_thr, noise_lim)
-
-        net2.res_trafo_est.q_hv_mvar[trafoIndex] = diff_stat(net.res_trafo.q_hv_mvar[trafoIndex], net2.res_trafo_est.q_hv_mvar[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo_est.q_lv_mvar[trafoIndex] = diff_stat(net.res_trafo.q_lv_mvar[trafoIndex], net2.res_trafo_est.q_lv_mvar[trafoIndex], alarm_thr, noise_lim)
-
-        net2.res_trafo_est.i_hv_ka[trafoIndex] = diff_stat(net.res_trafo.i_hv_ka[trafoIndex], net2.res_trafo_est.i_hv_ka[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo_est.i_lv_ka[trafoIndex] = diff_stat(net.res_trafo.i_lv_ka[trafoIndex], net2.res_trafo_est.i_lv_ka[trafoIndex], alarm_thr, noise_lim)
-
-    # trafo3w`s
-    for trafoIndex in net.trafo3w.index:
-        net2.res_trafo3w_est.p_hv_mw[trafoIndex] = diff_stat(net.res_trafo3w.p_hv_mw[trafoIndex], net2.res_trafo3w_est.p_hv_mw[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo3w_est.p_lv_mw[trafoIndex] = diff_stat(net.res_trafo3w.p_lv_mw[trafoIndex], net2.res_trafo3w_est.p_lv_mw[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo3w_est.p_mv_mw[trafoIndex] = diff_stat(net.res_trafo3w.p_mv_mw[trafoIndex], net2.res_trafo3w_est.p_mv_mw[trafoIndex], alarm_thr, noise_lim)
-
-        net2.res_trafo3w_est.q_hv_mvar[trafoIndex] = diff_stat(net.res_trafo3w.q_hv_mvar[trafoIndex], net2.res_trafo3w_est.q_hv_mvar[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo3w_est.q_lv_mvar[trafoIndex] = diff_stat(net.res_trafo3w.q_lv_mvar[trafoIndex], net2.res_trafo3w_est.q_lv_mvar[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo3w_est.q_mv_mvar[trafoIndex] = diff_stat(net.res_trafo3w.q_mv_mvar[trafoIndex], net2.res_trafo3w_est.q_mv_mvar[trafoIndex], alarm_thr, noise_lim)
-
-        net2.res_trafo3w_est.i_hv_ka[trafoIndex] = diff_stat(net.res_trafo3w.i_hv_ka[trafoIndex], net2.res_trafo3w_est.i_hv_ka[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo3w_est.i_lv_ka[trafoIndex] = diff_stat(net.res_trafo3w.i_lv_ka[trafoIndex], net2.res_trafo3w_est.i_lv_ka[trafoIndex], alarm_thr, noise_lim)
-        net2.res_trafo3w_est.i_mv_ka[trafoIndex] = diff_stat(net.res_trafo3w.i_mv_ka[trafoIndex], net2.res_trafo3w_est.i_mv_ka[trafoIndex], alarm_thr, noise_lim)
 
     print_net_est_res(net2)
 
