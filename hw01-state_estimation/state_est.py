@@ -2,11 +2,14 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-16t10:48R
+ When      : 2022-02-16t11:09R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.1.3
+ Version   : 1.1.4
 
  CHANGELOG :
+    v1.1.4 - 2022-02-16t11:09R <https://github.com/lduran2>
+        dimensions into list comprehensions
+
     v1.1.3 - 2022-02-16t10:55R <https://github.com/lduran2>
         successfully applying `diff_stat` on each dimension/index
         differentiate between net and net2
@@ -125,6 +128,12 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
             else:
                 return '+'
 
+    # components of dimension key
+    dim_vars = [r'p', r'q', r'i']
+    dim_units = [r'mw', r'mvar', r'ka']
+    directions = [r'to', r'from']
+    trafo_levels = [r'hv', r'lv']
+    trafo3w_levels = trafo_levels + [r'mv']
     # map of component types to dimensions that should be diffed
     comp_types_to_dims = {
         # busses
@@ -132,23 +141,11 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
             r'vm_pu', r'p_mw', r'q_mvar'
         ],
         # lines
-        'line': [
-            r'p_from_mw', r'p_to_mw',
-            r'q_from_mvar', r'q_to_mvar',
-            r'i_from_ka', r'i_to_ka'
-        ],
+        'line': [fr"{var}_{dir}_{unit}" for dir in directions for var, unit in zip(dim_vars, dim_units)],
         # transformers
-        r'trafo': [
-            r'p_hv_mw', r'p_lv_mw',
-            r'q_hv_mvar', r'q_lv_mvar',
-            r'i_hv_ka', r'i_lv_ka'
-        ],
-        # 3-Watt transformers
-        r'trafo3w': [
-            r'p_hv_mw', r'p_lv_mw', r'p_mv_mw',
-            r'q_hv_mvar', r'q_lv_mvar', r'q_mv_mvar',
-            r'i_hv_ka', r'i_lv_ka', r'i_mv_ka'
-        ]
+        r'trafo': [fr"{var}_{level}_{unit}" for level in trafo_levels for var, unit in zip(dim_vars, dim_units)],
+        # 3-way transformers
+        r'trafo3w': [fr"{var}_{level}_{unit}" for level in trafo3w_levels for var, unit in zip(dim_vars, dim_units)],
     }
 
     # for each component type
