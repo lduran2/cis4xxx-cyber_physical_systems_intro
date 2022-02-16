@@ -2,11 +2,15 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-16t11:09R
+ When      : 2022-02-16t14:35R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.1.4
+ Version   : 1.1.5
 
  CHANGELOG :
+    v1.1.5 - 2022-02-16t14:35R <https://github.com/lduran2>
+        `comp_types_to_dims` module level
+        dimensions `as_key`, `parts`
+
     v1.1.4 - 2022-02-16t11:09R <https://github.com/lduran2>
         dimensions into list comprehensions
 
@@ -46,6 +50,7 @@ from pandapower.diagnostic import diagnostic
 from pandapower.networks import *
 from math import fabs
 import pandapower as pp
+from itertools import product
 
 # default type of net to open in get_net
 DEFAULT_NET_TYPE = case9
@@ -128,26 +133,6 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
             else:
                 return '+'
 
-    # components of dimension key
-    dim_vars = [r'p', r'q', r'i']
-    dim_units = [r'mw', r'mvar', r'ka']
-    directions = [r'to', r'from']
-    trafo_levels = [r'hv', r'lv']
-    trafo3w_levels = trafo_levels + [r'mv']
-    # map of component types to dimensions that should be diffed
-    comp_types_to_dims = {
-        # busses
-        r'bus': [
-            r'vm_pu', r'p_mw', r'q_mvar'
-        ],
-        # lines
-        'line': [fr"{var}_{dir}_{unit}" for dir in directions for var, unit in zip(dim_vars, dim_units)],
-        # transformers
-        r'trafo': [fr"{var}_{level}_{unit}" for level in trafo_levels for var, unit in zip(dim_vars, dim_units)],
-        # 3-way transformers
-        r'trafo3w': [fr"{var}_{level}_{unit}" for level in trafo3w_levels for var, unit in zip(dim_vars, dim_units)],
-    }
-
     # for each component type
     for comp_type, dims in comp_types_to_dims.items():
         # loop through each component of that type on NET
@@ -157,13 +142,14 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
             # get the reference value on NET
             ref = getattr(net, fr"res_{comp_type}")
             # for each dimension
-            for dim in dims:
+            for dim_parts in dims[r'parts']:
+                dim = dims[r'as_key'](dim_parts)
                 # dimension on estimate
                 est2_dim = getattr(est2, dim)
                 # current dimension on reference
                 curr_ref_dim = getattr(ref, dim)[index]
                 est2_dim[index] = diff_stat(curr_ref_dim, est2_dim[index], alarm_thr, noise_lim)
-            # next dim
+            # next dim_parts
         # next index
     # next comp_type, dims
 
@@ -243,6 +229,39 @@ def pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev):
         # pp.create_measurement(net2, "i", "trafo3w", i_lv_ka, i_stddev, element=trafoIndex, side="lv")
         # i_mv_ka = net.res_trafo3w.i_mv_ka[trafoIndex]
         # pp.create_measurement(net2, "i", "trafo3w", i_mv_ka, i_stddev, element=trafoIndex, side="mv")
+
+#################################################################################################################################
+
+# components of dimension key
+dim_vars = [r'p', r'q', r'i']
+dim_units = [r'mw', r'mvar', r'ka']
+directions = [r'to', r'from']
+trafo_levels = [r'hv', r'lv']
+trafo3w_levels = trafo_levels + [r'mv']
+prod_o_zip_as_key = lambda parts: fr"{parts[0][0]}_{parts[1]}_{parts[0][1]}"
+# map of component types to dimensions that should be diffed
+comp_types_to_dims = {
+    # busses
+    r'bus': {
+        r'as_key': lambda dim: dim,
+        r'parts': [r'vm_pu', r'p_mw', r'q_mvar']
+    },
+    # lines "variable_direction_unit"
+    'line': {
+        r'as_key': prod_o_zip_as_key,
+        r'parts': product(zip(dim_vars, dim_units), directions)
+    },
+    # transformers "variable_level_unit"
+    r'trafo': {
+        r'as_key': prod_o_zip_as_key,
+        r'parts': product(zip(dim_vars, dim_units), trafo_levels)
+    },
+    # 3-way transformers "variable_level_unit"
+    r'trafo3w': {
+        r'as_key': prod_o_zip_as_key,
+        r'parts': product(zip(dim_vars, dim_units), trafo3w_levels)
+    }
+}
 
 #################################################################################################################################
 
