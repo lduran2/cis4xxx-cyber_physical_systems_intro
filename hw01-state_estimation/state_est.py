@@ -2,22 +2,25 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-14t23:06R
+ When      : 2022-02-16t10:22R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.0.2
+ Version   : 1.1.1
 
  CHANGELOG :
-    v1.1.0 - 2022-02-14t23:02R <https://github.com/lduran2>
+    v1.1.1 - 2022-02-16t10:22R <https://github.com/lduran2>
+        printing each individual component
+
+    v1.1.0 - 2022-02-16t10:17R <https://github.com/lduran2>
         starting condensing code
         printing components and index
 
-    v1.0.2 - 2022-02-14t23:02R <https://github.com/lduran2>
+    v1.0.2 - 2022-02-15t23:02R <https://github.com/lduran2>
         default `net_type` added to `main`
 
-    v1.0.1 - 2022-02-14t23:02R <https://github.com/lduran2>
+    v1.0.1 - 2022-02-15t23:02R <https://github.com/lduran2>
         `get_net` accepts types of networks `net_type`
 
-    v1.0.0 - 2022-02-14t22:49R <https://github.com/lduran2>
+    v1.0.0 - 2022-02-15t22:49R <https://github.com/lduran2>
         moved simultion to main method
 
     v0.0.0 - 2022-01-26 <https://www.kkant.net/>
@@ -115,17 +118,20 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
             else:
                 return '+'
 
-    components_to_diff = {
+    comp_types_to_diff = {
         'bus': None,
         'line': None,
         'trafo': None,
         'trafo3w': None
     }
 
-    for component, measures in components_to_diff.items():
-        print(component)
-        print(getattr(net, component).index);
-    # next component, measures
+    # for each component type
+    for comp_types, measures in comp_types_to_diff.items():
+        # loop through each component of that type
+        for index in getattr(net, comp_types).index:
+            print(getattr(net2, fr"res_{comp_types}_est"))
+        # next index
+    # next comp_types, measures
 
     # bus`s
     for busIndex in net.bus.index:
