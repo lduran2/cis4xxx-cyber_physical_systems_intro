@@ -154,6 +154,7 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
     # next comp_type, dims
 
     print_net_est_res(net2)
+# end def print_est_comparison(net, net2, alarm_thr, noise_lim)
 
 def pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev):
     # bus`s
@@ -172,63 +173,32 @@ def pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev):
         if q_mvar != 0:
             pp.create_measurement(net2, "q", "bus", q_mvar, pq_stddev, element=busIndex)
 
-    # line`s
-    for lineIndex in net.line.index:
-        p_from_mw = net.res_line.p_from_mw[lineIndex]
-        pp.create_measurement(net2, "p", "line", p_from_mw, pq_stddev, element=lineIndex, side="from")
-        p_to_mw = net.res_line.p_to_mw[lineIndex]
-        pp.create_measurement(net2, "p", "line", p_to_mw, pq_stddev, element=lineIndex, side="to")
-
-        q_from_mvar = net.res_line.q_from_mvar[lineIndex]
-        pp.create_measurement(net2, "q", "line", q_from_mvar, pq_stddev, element=lineIndex, side="from")
-        q_to_mvar = net.res_line.q_to_mvar[lineIndex]
-        pp.create_measurement(net2, "q", "line", q_to_mvar, pq_stddev, element=lineIndex, side="to")
-
-        # i_from_ka = net.res_line.i_from_ka[lineIndex]
-        # pp.create_measurement(net2, "i", "line", i_from_ka, i_stddev, element=lineIndex, side="from")
-        # i_to_ka = net.res_line.i_to_ka[lineIndex]
-        # pp.create_measurement(net2, "i", "line", i_to_ka, i_stddev, element=lineIndex, side="to")
-
-    # trafo`s
-    for trafoIndex in net.trafo.index:
-        p_hv_mw = net.res_trafo.p_hv_mw[trafoIndex]
-        pp.create_measurement(net2, "p", "trafo", p_hv_mw, pq_stddev, element=trafoIndex, side="hv")
-        p_lv_mw = net.res_trafo.p_lv_mw[trafoIndex]
-        pp.create_measurement(net2, "p", "trafo", p_lv_mw, pq_stddev, element=trafoIndex, side="lv")
-
-        q_hv_mvar = net.res_trafo.q_hv_mvar[trafoIndex]
-        pp.create_measurement(net2, "q", "trafo", q_hv_mvar, pq_stddev, element=trafoIndex, side="hv")
-        q_lv_mvar = net.res_trafo.q_lv_mvar[trafoIndex]
-        pp.create_measurement(net2, "q", "trafo", q_lv_mvar, pq_stddev, element=trafoIndex, side="lv")
-
-        # i_hv_ka = net.res_trafo.i_hv_ka[trafoIndex]
-        # pp.create_measurement(net2, "i", "trafo", i_hv_ka, i_stddev, element=trafoIndex, side="hv")
-        # i_lv_ka = net.res_trafo.i_lv_ka[trafoIndex]
-        # pp.create_measurement(net2, "i", "trafo", i_lv_ka, i_stddev, element=trafoIndex, side="lv")
-
-    # trafo3w`s
-    for trafoIndex in net.trafo3w.index:
-
-        p_hv_mw = net.res_trafo3w.p_hv_mw[trafoIndex]
-        pp.create_measurement(net2, "p", "trafo3w", p_hv_mw, pq_stddev, element=trafoIndex, side="hv")
-        p_lv_mw = net.res_trafo3w.p_lv_mw[trafoIndex]
-        pp.create_measurement(net2, "p", "trafo3w", p_lv_mw, pq_stddev, element=trafoIndex, side="lv")
-        p_mv_mw = net.res_trafo3w.p_mv_mw[trafoIndex]
-        pp.create_measurement(net2, "p", "trafo3w", p_mv_mw, pq_stddev, element=trafoIndex, side="mv")
-
-        q_hv_mvar = net.res_trafo3w.q_hv_mvar[trafoIndex]
-        pp.create_measurement(net2, "q", "trafo3w", q_hv_mvar, pq_stddev, element=trafoIndex, side="hv")
-        q_lv_mvar = net.res_trafo3w.q_lv_mvar[trafoIndex]
-        pp.create_measurement(net2, "q", "trafo3w", q_lv_mvar, pq_stddev, element=trafoIndex, side="lv")
-        q_mv_mvar = net.res_trafo3w.q_mv_mvar[trafoIndex]
-        pp.create_measurement(net2, "q", "trafo3w", q_mv_mvar, pq_stddev, element=trafoIndex, side="mv")
-
-        # i_hv_ka = net.res_trafo3w.i_hv_ka[trafoIndex]
-        # pp.create_measurement(net2, "i", "trafo3w", i_hv_ka, i_stddev, element=trafoIndex, side="hv")
-        # i_lv_ka = net.res_trafo3w.i_lv_ka[trafoIndex]
-        # pp.create_measurement(net2, "i", "trafo3w", i_lv_ka, i_stddev, element=trafoIndex, side="lv")
-        # i_mv_ka = net.res_trafo3w.i_mv_ka[trafoIndex]
-        # pp.create_measurement(net2, "i", "trafo3w", i_mv_ka, i_stddev, element=trafoIndex, side="mv")
+    # the rest of components
+    for comp_type, dims in comp_types_to_dims.items():
+        # skip the bus component
+        if (comp_type==r'bus'):
+            continue
+        # end if (comp_type==r'bus')
+        # loop through each component of that type on NET
+        for index in getattr(net, comp_type).index:
+            # get the reference value on NET
+            ref = getattr(net, fr"res_{comp_type}")
+            # for each dimension (as name parts)
+            for dim_parts in dims[r'parts']:
+                # skip currents
+                if (dim_parts[0][0]==r'i'):
+                    continue
+                # end if (dim_parts[0][0]==r'i')
+                # combine name parts
+                dim = dims[r'as_key'](dim_parts)
+                # current dimension on reference
+                curr_ref_dim = getattr(ref, dim)[index]
+                print(net2, dim_parts[0][0], comp_type, curr_ref_dim, pq_stddev, 'element=',index, 'side=',dim_parts[1])
+                pp.create_measurement(net2, dim_parts[0][0], comp_type, curr_ref_dim, pq_stddev, element=index, side=dim_parts[1])
+            # next dim_parts
+        # next index
+    # next comp_type, dims
+# end def pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev)
 
 #################################################################################################################################
 
