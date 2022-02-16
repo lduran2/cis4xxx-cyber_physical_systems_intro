@@ -7,6 +7,10 @@ r'''
  Version   : 1.0.2
 
  CHANGELOG :
+    v1.1.0 - 2022-02-14t23:02R <https://github.com/lduran2>
+        starting condensing code
+        printing components and index
+
     v1.0.2 - 2022-02-14t23:02R <https://github.com/lduran2>
         default `net_type` added to `main`
 
@@ -34,6 +38,15 @@ import pandapower as pp
 DEFAULT_NET_TYPE = case9
 
 def main(net_type=DEFAULT_NET_TYPE):
+    try:
+        main_not_done(net_type)
+    finally:
+        # notify program complete
+        print('Done.')
+    # end try main_not_done(net_type)
+# end def main(net_type=DEFAULT_NET_TYPE)
+
+def main_not_done(net_type):
     net = get_net(net_type=net_type)
     pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
 
@@ -58,7 +71,7 @@ def main(net_type=DEFAULT_NET_TYPE):
         print(V, sep=' ')
         print("\n Voltage angles: ", delta, sep=' ')
         print_est_comparison(net, net2, 1, 0.001)
-# end def main()
+# end def main_not_done(net_type)
 
 #################################################################################################################################
 
@@ -101,6 +114,18 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
                 return '{:.3e}({:.2f}%)'.format(abs_diff, rel_diff)
             else:
                 return '+'
+
+    components_to_diff = {
+        'bus': None,
+        'line': None,
+        'trafo': None,
+        'trafo3w': None
+    }
+
+    for component, measures in components_to_diff.items():
+        print(component)
+        print(getattr(net, component).index);
+    # next component, measures
 
     # bus`s
     for busIndex in net.bus.index:
