@@ -7,7 +7,7 @@ r'''
  Version   : 1.2.1
 
  CHANGELOG :
-    v1.2.1 - 2022-02-13t01:28R <https://github.com/lduran2>
+    v1.2.1 - 2022-02-13t01:31R <https://github.com/lduran2>
         indicate no bad data found
 
     v1.2.0 - 2022-02-13t01:28R <https://github.com/lduran2>
@@ -42,25 +42,25 @@ import pandapower as pp
 
 # default type of net to open as get_net in main
 DEFAULT_NET_GET = case9
+# default standard deviations
+DEFAULT_V_STDDEV = 0.025 # pu
+DEFAULT_PQ_STDDEV = 0.025 # MW/Mvar
+DEFAULT_I_STDDEV= 0.002 # kA
 
-def main(get_net=DEFAULT_NET_GET):
+def main(get_net=DEFAULT_NET_GET, v_stddev=DEFAULT_V_STDDEV, pq_stddev=DEFAULT_PQ_STDDEV, i_stddev=DEFAULT_I_STDDEV):
     try:
-        main_not_done(get_net)
+        main_not_done(get_net, v_stddev, pq_stddev, i_stddev)
     finally:
         # notify program complete
         print('Done.')
     # end try main_not_done(net_type)
-# end def main(get_net=DEFAULT_NET_GET)
+# end def main()
 
-def main_not_done(get_net):
+def main_not_done(get_net, v_stddev, pq_stddev, i_stddev):
     net = get_net()
     pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
 
     net2 = get_net()
-
-    v_stddev = 0.025 # pu
-    pq_stddev = 0.025 # MW/Mvar
-    i_stddev= 0.002 # kA
 
     pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev)
     #diagnostic(net2, report_style='detailed')
@@ -78,7 +78,7 @@ def main_not_done(get_net):
         print(V, sep=' ')
         print("\n Voltage angles: ", delta, sep=' ')
         print_est_comparison(net, net2, 1, 0.001)
-# end def main_not_done(get_net)
+# end def main_not_done(get_net, v_stddev, pq_stddev, i_stddev)
 
 #################################################################################################################################
 
