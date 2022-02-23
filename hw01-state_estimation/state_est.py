@@ -34,20 +34,20 @@ from pandapower.networks import *
 from math import fabs
 import pandapower as pp
 
-# default type of net to open in get_net
-DEFAULT_NET_TYPE = case9
+# default type of net to open as get_net in main
+DEFAULT_NET_GET = case9
 
-def main(net_type=DEFAULT_NET_TYPE):
+def main(get_net=DEFAULT_NET_GET):
     try:
-        main_not_done(net_type)
+        main_not_done(get_net)
     finally:
         # notify program complete
         print('Done.')
     # end try main_not_done(net_type)
-# end def main(net_type=DEFAULT_NET_TYPE)
+# end def main(get_net=DEFAULT_NET_GET)
 
-def main_not_done(net_type):
-    net = get_net(net_type=net_type)
+def main_not_done(get_net):
+    net = get_net()
     pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
 
     net2 = get_net()
@@ -71,16 +71,9 @@ def main_not_done(net_type):
         print(V, sep=' ')
         print("\n Voltage angles: ", delta, sep=' ')
         print_est_comparison(net, net2, 1, 0.001)
-# end def main_not_done(net_type)
+# end def main_not_done(get_net)
 
 #################################################################################################################################
-
-def get_net(net_type=DEFAULT_NET_TYPE):
-    # print the net_type that is going to run
-    print(fr"===running {net_type} net===")
-    # create and return it
-    return net_type()
-# end def get_net(net_type=DEFAULT_NET_TYPE)
 
 def print_net_est_res(net):
 
@@ -114,18 +107,6 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
                 return '{:.3e}({:.2f}%)'.format(abs_diff, rel_diff)
             else:
                 return '+'
-
-    components_to_diff = {
-        'bus': None,
-        'line': None,
-        'trafo': None,
-        'trafo3w': None
-    }
-
-    for component, measures in components_to_diff.items():
-        print(component)
-        print(getattr(net, component).index);
-    # next component, measures
 
     # bus`s
     for busIndex in net.bus.index:
