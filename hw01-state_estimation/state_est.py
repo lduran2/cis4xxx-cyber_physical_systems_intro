@@ -2,11 +2,17 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-14t23:06R
+ When      : 2022-02-13t01:31R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.0.2
+ Version   : 1.2.1
 
  CHANGELOG :
+    v1.2.1 - 2022-02-13t01:28R <https://github.com/lduran2>
+        indicate no bad data found
+
+    v1.2.0 - 2022-02-13t01:28R <https://github.com/lduran2>
+        restored from v1.1.0, main(get_net)
+
     v1.1.0 - 2022-02-14t23:02R <https://github.com/lduran2>
         starting condensing code
         printing components and index
@@ -63,6 +69,7 @@ def main_not_done(get_net):
         print("Bad data found")
         success = remove_bad_data(net2)
     else:     
+        print("No bad data found")
         success = False
     #success = estimate(net2, calculate_voltage_angles=True, zero_injection='auto', init='flat')
     if success:
