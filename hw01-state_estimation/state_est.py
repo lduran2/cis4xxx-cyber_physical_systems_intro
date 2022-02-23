@@ -59,11 +59,11 @@ def dv_0v20_on_bus5(k):
 
 def main(get_net=DEFAULT_NET_GET, bus_dvs_from_index=dv_0v20_on_bus5,
     v_stddev=DEFAULT_V_STDDEV, pq_stddev=DEFAULT_PQ_STDDEV,
-    i_stddev=DEFAULT_I_STDDEV
+    i_stddev=DEFAULT_I_STDDEV, disp_chi2=False
 ):
     try:
         main_not_done(get_net, bus_dvs_from_index,
-            v_stddev, pq_stddev, i_stddev
+            v_stddev, pq_stddev, i_stddev, disp_chi2
         )
     finally:
         # notify program complete
@@ -72,7 +72,7 @@ def main(get_net=DEFAULT_NET_GET, bus_dvs_from_index=dv_0v20_on_bus5,
 # end def main()
 
 def main_not_done(get_net, bus_dvs_from_index,
-    v_stddev, pq_stddev, i_stddev
+    v_stddev, pq_stddev, i_stddev, disp_chi2
 ):
     net = get_net()
     pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
@@ -86,6 +86,8 @@ def main_not_done(get_net, bus_dvs_from_index,
     chi2_test = chi2_analysis(net2)
     if chi2_test: 
         print("Bad data found")
+        if (disp_chi2):
+            print('chi2_test on perturbed net2:', chi2_test)
         success = remove_bad_data(net2)
     else:     
         print("No bad data found")
@@ -98,7 +100,7 @@ def main_not_done(get_net, bus_dvs_from_index,
         print("\n Voltage angles: ", delta, sep=' ')
         print_est_comparison(net, net2, 1, 0.001)
 # end def main_not_done(get_net, bus_dvs_from_index,
-#   v_stddev, pq_stddev, i_stddev
+#   v_stddev, pq_stddev, i_stddev, disp_chi2
 # )
 
 #################################################################################################################################
@@ -181,8 +183,12 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
     print_net_est_res(net2)
 
 def pass_meases_feedback(net, net2, bus_dvs_from_index, v_stddev, pq_stddev, i_stddev):
+    r'''
+     Creates a copy of `net` as `net2` which has the changes to bus
+     voltages specified by `bus_dvs_from_index`.
+     '''
     # bus`s
-    # changes in voltage
+    # changes in voltage (a.k.a. perturbations)
     dvs = tuple(map(bus_dvs_from_index, net.bus.index))
     for busIndex in net.bus.index:
         vn_pu = net.res_bus.vm_pu[busIndex]
