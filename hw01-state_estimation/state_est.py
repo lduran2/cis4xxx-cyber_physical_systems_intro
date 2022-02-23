@@ -2,11 +2,17 @@ r'''
  Canonical : https://github.com/lduran2/cis4xxx-cyber_physical_systems_intro/blob/master/hw01-state_estimation/state_est.py
  Simulates the state emulation process in a power grid.
  By        : Leomar Durán <https://github.com/lduran2>
- When      : 2022-02-13t01:31R
+ When      : 2022-02-13t02:26R
  For       : CIS 4XXX/Introduction to Cyber-Physical Systems
- Version   : 1.2.1
+ Version   : 1.2.2
 
  CHANGELOG :
+    v1.2.3 - 2022-02-13t02:26R <https://github.com/lduran2>
+        move `bus_dvs_from_index` to main params
+
+    v1.2.2 - 2022-02-13t01:40R <https://github.com/lduran2>
+        move stardard deviations to main params
+
     v1.2.1 - 2022-02-13t01:31R <https://github.com/lduran2>
         indicate no bad data found
 
@@ -47,22 +53,35 @@ DEFAULT_V_STDDEV = 0.025 # pu
 DEFAULT_PQ_STDDEV = 0.025 # MW/Mvar
 DEFAULT_I_STDDEV= 0.002 # kA
 
-def main(get_net=DEFAULT_NET_GET, v_stddev=DEFAULT_V_STDDEV, pq_stddev=DEFAULT_PQ_STDDEV, i_stddev=DEFAULT_I_STDDEV):
+def dv_0v20_on_bus5(k):
+    return 0.25 if k==5 else 0
+# end def dv_0v20_on_bus5(k)
+
+def main(get_net=DEFAULT_NET_GET, bus_dvs_from_index=dv_0v20_on_bus5,
+    v_stddev=DEFAULT_V_STDDEV, pq_stddev=DEFAULT_PQ_STDDEV,
+    i_stddev=DEFAULT_I_STDDEV
+):
     try:
-        main_not_done(get_net, v_stddev, pq_stddev, i_stddev)
+        main_not_done(get_net, bus_dvs_from_index,
+            v_stddev, pq_stddev, i_stddev
+        )
     finally:
         # notify program complete
         print('Done.')
     # end try main_not_done(net_type)
 # end def main()
 
-def main_not_done(get_net, v_stddev, pq_stddev, i_stddev):
+def main_not_done(get_net, bus_dvs_from_index,
+    v_stddev, pq_stddev, i_stddev
+):
     net = get_net()
     pp.runpp(net, calculate_voltage_angles=True, enforce_q_lims=False)
 
     net2 = get_net()
 
-    pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev)
+    pass_meases_feedback(net, net2, bus_dvs_from_index,
+        v_stddev, pq_stddev, i_stddev
+    )
     #diagnostic(net2, report_style='detailed')
     chi2_test = chi2_analysis(net2)
     if chi2_test: 
@@ -78,7 +97,9 @@ def main_not_done(get_net, v_stddev, pq_stddev, i_stddev):
         print(V, sep=' ')
         print("\n Voltage angles: ", delta, sep=' ')
         print_est_comparison(net, net2, 1, 0.001)
-# end def main_not_done(get_net, v_stddev, pq_stddev, i_stddev)
+# end def main_not_done(get_net, bus_dvs_from_index,
+#   v_stddev, pq_stddev, i_stddev
+# )
 
 #################################################################################################################################
 
@@ -159,15 +180,13 @@ def print_est_comparison(net, net2, alarm_thr, noise_lim):
 
     print_net_est_res(net2)
 
-def pass_meases_feedback(net, net2, v_stddev, pq_stddev, i_stddev):
+def pass_meases_feedback(net, net2, bus_dvs_from_index, v_stddev, pq_stddev, i_stddev):
     # bus`s
+    # changes in voltage
+    dvs = tuple(map(bus_dvs_from_index, net.bus.index))
     for busIndex in net.bus.index:
         vn_pu = net.res_bus.vm_pu[busIndex]
-        if busIndex == 5:
-            x=0.20
-        else:
-            x=0
-        pp.create_measurement(net2, "v", "bus", vn_pu+x, v_stddev, element=busIndex)
+        pp.create_measurement(net2, "v", "bus", vn_pu+dvs[busIndex], v_stddev, element=busIndex)
 
         p_mw = net.res_bus.p_mw[busIndex]
         if p_mw != 0:
